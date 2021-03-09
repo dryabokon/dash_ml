@@ -12,7 +12,7 @@ import base64
 class DashDraw(object,):
     dct_style_image = {'textAlign': 'center', 'height': '150px', 'margin': '0px', 'padding': '0px', 'object-fit': 'scale-down'}
     dct_style_text  = {'textAlign': 'center','object-fit': 'scale-down'}
-    URL_image_header = './logo/header.png'
+    URL_image_header = './logo/header2.png'
 # ----------------------------------------------------------------------------------------------------------------------
     def __init__(self,folder_out=None,dark_mode=False):
         self.folder_out = folder_out
@@ -78,7 +78,11 @@ class DashDraw(object,):
     def draw_chart_unframed(self, id, color):
         return html.Div([dbc.Card(([html.Div(id=id, style=self.dct_style_text)]), color=color)])
 # ----------------------------------------------------------------------------------------------------------------------
-    def draw_figure_px(self,fig_px):
+    def draw_graph(self,id,color):
+        html.Div([dbc.Card(dbc.CardBody([dcc.Graph(figure=id)], style=self.dct_style_image), color=color)])
+        return
+# ----------------------------------------------------------------------------------------------------------------------
+    def draw_figure_px(self,fig_px,color):
         #https://plotly.com/python/reference/layout/
         fig_px.update_xaxes(gridcolor=self.clr_grid,showline=False)
         fig_px.update_yaxes(gridcolor=self.clr_grid,showline=False)
@@ -91,7 +95,7 @@ class DashDraw(object,):
             plot_bgcolor=self.clr_chart,
             paper_bgcolor=self.clr_chart,
         )
-        return  html.Div([dbc.Card(dbc.CardBody([dcc.Graph(figure=fig_px)],style=self.dct_style_image),color=self.clr_chart)])
+        return  html.Div([dbc.Card(dbc.CardBody([dcc.Graph(figure=fig_px)],style=self.dct_style_image),color=color)])
 # ----------------------------------------------------------------------------------------------------------------------
     def draw_picker(self, id, text, color):
         return html.Div([dbc.Card(dbc.CardBody([html.Div([self.get_picker(id, text)], style=self.dct_style_text)]), color=color)])

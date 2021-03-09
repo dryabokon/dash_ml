@@ -12,7 +12,7 @@ folder_out = './assets/'
 # TODO PR-curves, feature correlation, VIF,  cross validation scores,
 # TODO target selection, feature filtering
 # ----------------------------------------------------------------------------------------------------------------------
-dark_mode = True
+dark_mode = False
 # ----------------------------------------------------------------------------------------------------------------------
 app = dash.Dash(external_stylesheets=([dbc.themes.BOOTSTRAP] if dark_mode else [dbc.themes.BOOTSTRAP]))
 # ----------------------------------------------------------------------------------------------------------------------
@@ -118,7 +118,7 @@ def update_graph(contents):
     plots_fi    = dict((i, plt) for i, plt in enumerate([html.Img(src=app.get_asset_url(U.URL_empty))]*4))
     plots_train = dict((i, plt) for i, plt in enumerate([html.Img(src=app.get_asset_url(U.URL_empty))]*4))
     plots_test  = dict((i, plt) for i, plt in enumerate([html.Img(src=app.get_asset_url(U.URL_empty))]*4))
-    plots_dnst  = dict((i, plt) for i, plt in enumerate([html.Img(src=app.get_asset_url(U.URL_empty))] * 4))
+    plots_dnst  = dict((i, plt) for i, plt in enumerate([html.Img(src=app.get_asset_url(U.URL_empty))]*4))
 
     if contents:
         df0 = U.parse_data(contents[0])
@@ -139,7 +139,6 @@ def update_graph(contents):
 # ----------------------------------------------------------------------------------------------------------------------
 if __name__ == "__main__":
 
-    layout_main = html.Div([dbc.Card(dbc.CardBody(div_main), color=U.clr_pad)])
-    app.layout = layout_main
+    app.layout = html.Div([dbc.Card(dbc.CardBody(div_main), color=U.clr_pad)])
     app.run_server(debug=False)
 

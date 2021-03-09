@@ -1,16 +1,21 @@
+import pandas as pd
 import os
 import numpy
 import dash_html_components as html
 import tempfile
+from plotly.tools import mpl_to_plotly
 # ----------------------------------------------------------------------------------------------------------------------
 from classifier import classifier_LM
 from classifier import classifier_RF
 from classifier import classifier_SVM
 from classifier import classifier_KNN
-
+# ----------------------------------------------------------------------------------------------------------------------
+from TS import TS_AutoRegression
+# ----------------------------------------------------------------------------------------------------------------------
 import tools_DF
 import tools_plot_v2
 import tools_ML_v2
+import tools_TS
 import tools_IO
 import tools_feature_importance
 # ----------------------------------------------------------------------------------------------------------------------
@@ -19,10 +24,15 @@ class Business_logic(object):
         self.folder_out = folder_out
         self.P = tools_plot_v2.Plotter(folder_out,dark_mode)
         self.app = app
+        self.filename_retro_df = 'retro.csv'
+
+        self.TS = tools_TS.tools_TS(Classifier=TS_AutoRegression.TS_AutoRegression(folder_out), dark_mode=dark_mode, folder_out=folder_out)
+        self.clear_cache()
+
         return
 # ----------------------------------------------------------------------------------------------------------------------
-    def clear_cache(self):
-        tools_IO.remove_files(self.folder_out, list_of_masks='*.*', create=False)
+    def clear_cache(self,list_of_masks='*.*'):
+        tools_IO.remove_files(self.folder_out, list_of_masks=list_of_masks, create=False)
         return
 # ----------------------------------------------------------------------------------------------------------------------
     def get_pairplots(self,df0,idx_target,pairplots):
@@ -126,4 +136,53 @@ class Business_logic(object):
 
         return plots_dnst
 # ----------------------------------------------------------------------------------------------------------------------
+    def get_TS_prediction_plot_html(self, df0,idx_target,train_size,n_steps,plots_acc):
+        self.clear_cache(list_of_masks='*.png')
 
+        if not os.path.exists(self.folder_out+self.filename_retro_df):
+            df_retro = pd.DataFrame({'GT': df0.iloc[:, idx_target],
+                                     'predict': numpy.full(df0.shape[0], numpy.nan),
+                                     'predict_ahead': numpy.full(df0.shape[0], numpy.nan),
+                                     'predict_ahead_min': numpy.full(df0.shape[0], numpy.nan),
+                                     'predict_ahead_max': numpy.full(df0.shape[0], numpy.nan),
+                                     })
+            df_retro.to_csv(self.folder_out + self.filename_retro_df, index=False, sep='\t')
+        else:
+            df_retro = pd.read_csv(self.folder_out + self.filename_retro_df, sep='\t')
+
+
+
+        filename_out = 'pred_ahead_%s.png' % self.TS.classifier.name
+
+        df_step = self.TS.predict_n_steps_ahead(df0, idx_target,n_steps=20,do_debug=False)
+        df_step['GT'] = numpy.full(n_steps, numpy.nan)
+        df_step['predict'] = numpy.full(n_steps, numpy.nan)
+
+        df_retro = df_retro.append(df_step, ignore_index=True)
+        x_range = [max(0, df_retro.shape[0] - n_steps * 10), df_retro.shape[0]]
+        self.P.TS_matplotlib(df_retro, [0, 2, 1], None, idxs_fill=[3, 4], x_range=x_range,filename_out=filename_out)
+        df_retro.drop(numpy.arange(df_retro.shape[0] - df_step.shape[0] + 1, df_retro.shape[0], 1), axis=0,inplace=True)
+        df_retro['GT'].iloc[-1] = float(df0.iloc[-1, idx_target])
+        df_retro['predict'].iloc[-1] = df_retro['predict_ahead'].iloc[-1]
+        df_retro['predict_ahead'] = numpy.nan
+        df_retro.to_csv(self.folder_out + self.filename_retro_df, index=False, sep='\t')
+
+        URL = next(tempfile._get_candidate_names()) + '.png'
+        os.rename(self.folder_out + filename_out, self.folder_out + URL)
+        plot_TS  = [html.Img(src=self.app.get_asset_url(URL))]
+
+        xxx = df_retro[['GT','predict']][train_size:].dropna()
+        Y_test = xxx['GT'].to_numpy()
+        Y_test_pred = xxx['predict'].to_numpy()
+
+        if Y_test.shape[0]>=2:
+            self.P.plot_fact_predict(Y_test, Y_test_pred,filename_out='test_fact_pred.png')
+            self.P.plot_hist(Y_test - Y_test_pred ,filename_out='test_err.png')
+
+            for i, filename in enumerate(['test_fact_pred.png','test_err.png']):
+                URL = next(tempfile._get_candidate_names()) + '.png'
+                os.rename(self.folder_out + filename, self.folder_out + URL)
+                plots_acc[i]=([html.Img(src=self.app.get_asset_url(URL))])
+
+        return plot_TS,plots_acc
+# ----------------------------------------------------------------------------------------------------------------------
