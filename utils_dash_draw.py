@@ -12,7 +12,7 @@ import base64
 class DashDraw(object,):
     dct_style_image = {'textAlign': 'center', 'height': '150px', 'margin': '0px', 'padding': '0px', 'object-fit': 'scale-down'}
     dct_style_text  = {'textAlign': 'center','object-fit': 'scale-down'}
-    URL_image_header = './logo/header2.png'
+    URL_image_header = './logo/header.png'
 # ----------------------------------------------------------------------------------------------------------------------
     def __init__(self,folder_out=None,dark_mode=False):
         self.folder_out = folder_out
